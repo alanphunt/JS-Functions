@@ -6,6 +6,12 @@
 		return document.querySelectorAll(qry);
 	};
 
+	const mapFormData = (form) =>{
+		return Array.from(form.children).map(value => {
+			return {[value.getAttribute("name")] : value.value};
+		}).filter(el => el.null !== "");
+	};
+
 	const ajax = (o) => {
 		let xhr = new XMLHttpRequest();
 
