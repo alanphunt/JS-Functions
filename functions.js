@@ -1,22 +1,27 @@
-	const $ = (qry) => {
-		return document.querySelector(qry);
-	};
+const $ = (el) => {
+	const ele = document.querySelectorAll(el);
+	return (ele.length === 1 ? ele[0] : ele);
+};
 
-	const $$ = (qry) => {
-		return document.querySelectorAll(qry);
-	};
+const mapFormData = (form) =>{
+	return Array.from(form.children).map(value => {
+		return {[value.getAttribute("name")] : value.value};
+	}).filter(el => el.null !== "");
+};
 
-	const mapFormData = (form) =>{
-		return Array.from(form.children).map(value => {
-			return {[value.getAttribute("name")] : value.value};
-		}).filter(el => el.null !== "");
-	};
-
-	
 const ajax = (o) => {
 	let xhr = new XMLHttpRequest();
 
+	if(o.events){
+		//loadstart, load, loadend, progress (upload/download only), error, abort
+		for(let [key, value] of Object.entries(o.events)){
+			xhr.addEventListener(key, value);
+		}
+	}
+
 	xhr.onreadystatechange = function(){
+		if(o.progress)
+			o.progress((this.readyState*25));
 		if(this.readyState === XMLHttpRequest.DONE){
 			let callback = (response) =>{
 				console.log(response);
@@ -26,7 +31,7 @@ const ajax = (o) => {
 				case 1:
 				case 2:
 				case 3:
-					callback = o.success || callback;
+					callback = o.success || function(){};
 					break;
 				case 4:
 				case 5:
@@ -48,7 +53,7 @@ const ajax = (o) => {
 	};
 
 	if(o.data) {
-		var params = typeof o.data == 'string' || o.useUriEncoding === false
+		var params = typeof o.data == 'string' || o.noEncoding === true || o.isFile === true
 			? o.data
 			: Object.keys(o.data).map(function (k) {
 				return (!o.data.length
@@ -57,10 +62,11 @@ const ajax = (o) => {
 				);
 			}).join('&');
 	}
-	o.method = (o.method ? o.method : "GET");
-	xhr.open(o.method, (o.url === undefined ? "/" : (o.url+"?"+params)), o.async || true);
 
-	if(o.method !== "GET")
+	o.method = (o.method ? o.method : "GET");
+	xhr.open(o.method, (o.url === undefined ? "/" : o.method === "GET" ? (o.url+"?"+params) : o.url), o.async || true);
+
+	if(o.method !== "GET" && o.useContentType !== false && o.isFile !== true)
 		xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
 	if(o.async !== false)
@@ -70,8 +76,8 @@ const ajax = (o) => {
 		xhr.overrideMimeType(o.mimeType);
 
 	if(o.headers)
-		for(let i of o.headers){
-			xhr.setRequestHeader(Object.keys(i)[0], Object.values(i)[0]);
+		for(let [key, value] of Object.entries(o.headers)){
+			xhr.setRequestHeader(key, value);
 		}
 
 	xhr.send(params);
