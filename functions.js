@@ -64,7 +64,7 @@ const ajax = (o) => {
 	}
 
 	o.method = (o.method ? o.method : "GET");
-	xhr.open(o.method, (o.url === undefined ? "/" : o.method === "GET" ? (o.url+"?"+params) : o.url), o.async || true);
+	xhr.open(o.method, (o.url === undefined ? "/" : o.method === "GET" && o.data !== undefined ? (o.url+"?"+params) : o.url), o.async || true);
 
 	if(o.method !== "GET" && o.useContentType !== false && o.isFile !== true)
 		xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
